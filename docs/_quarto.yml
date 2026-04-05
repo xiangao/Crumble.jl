@@ -1,0 +1,21 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Crumble.jl"
+  sidebar:
+    contents:
+      - index.md
+      - vignette.md
+      - getting-started.md
+      - section: reference
+        contents:
+          - reference/crumble.md
+          - reference/crumble_control.md
+          - reference/sequential_module.md
+
+format:
+  html:
+    theme: cosmo
+    highlight-style: github

@@ -1,0 +1,501 @@
+[
+  {
+    "objectID": "reference/crumble_control.html",
+    "href": "reference/crumble_control.html",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "Create control parameters for the Crumble estimation procedure.\n\n\n\ncrumble_control(;\n    crossfit_folds::Int=10,\n    mlr3superlearner_folds::Int=10,\n    zprime_folds::Int=1,\n    epochs::Int=100,\n    learning_rate::Float64=0.01,\n    batch_size::Int=64,\n    device::String=\"cpu\"\n)\n\n\n\n\n\n\nArgument\nDefault\nDescription\n\n\n\n\ncrossfit_folds\n10\nNumber of cross-fitting folds\n\n\nmlr3superlearner_folds\n10\nFolds for MLJ Super Learner\n\n\nzprime_folds\n1\nFolds for Z’ permutation\n\n\nepochs\n100\nNeural network training epochs\n\n\nlearning_rate\n0.01\nLearning rate for NN\n\n\nbatch_size\n64\nMini-batch size\n\n\ndevice\n“cpu”\nDevice: “cpu”, “cuda”, or “mps”\n\n\n\n\n\n\nReturns a CrumbleControl object.\n\n\n\n# Fast settings for testing\ncontrol = crumble_control(\n    crossfit_folds = 2,\n    epochs = 5,\n    batch_size = 32\n)\n\n# Production settings\ncontrol = crumble_control(\n    crossfit_folds = 10,\n    epochs = 100,\n    learning_rate = 0.01,\n    batch_size = 64,\n    device = \"cuda\"\n)",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble_control.html#description",
+    "href": "reference/crumble_control.html#description",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "Create control parameters for the Crumble estimation procedure.",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble_control.html#usage",
+    "href": "reference/crumble_control.html#usage",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "crumble_control(;\n    crossfit_folds::Int=10,\n    mlr3superlearner_folds::Int=10,\n    zprime_folds::Int=1,\n    epochs::Int=100,\n    learning_rate::Float64=0.01,\n    batch_size::Int=64,\n    device::String=\"cpu\"\n)",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble_control.html#arguments",
+    "href": "reference/crumble_control.html#arguments",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "Argument\nDefault\nDescription\n\n\n\n\ncrossfit_folds\n10\nNumber of cross-fitting folds\n\n\nmlr3superlearner_folds\n10\nFolds for MLJ Super Learner\n\n\nzprime_folds\n1\nFolds for Z’ permutation\n\n\nepochs\n100\nNeural network training epochs\n\n\nlearning_rate\n0.01\nLearning rate for NN\n\n\nbatch_size\n64\nMini-batch size\n\n\ndevice\n“cpu”\nDevice: “cpu”, “cuda”, or “mps”",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble_control.html#value",
+    "href": "reference/crumble_control.html#value",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "Returns a CrumbleControl object.",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble_control.html#examples",
+    "href": "reference/crumble_control.html#examples",
+    "title": "CrumbleControl",
+    "section": "",
+    "text": "# Fast settings for testing\ncontrol = crumble_control(\n    crossfit_folds = 2,\n    epochs = 5,\n    batch_size = 32\n)\n\n# Production settings\ncontrol = crumble_control(\n    crossfit_folds = 10,\n    epochs = 100,\n    learning_rate = 0.01,\n    batch_size = 64,\n    device = \"cuda\"\n)",
+    "crumbs": [
+      "reference",
+      "CrumbleControl"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html",
+    "href": "reference/crumble.html",
+    "title": "Crumble",
+    "section": "",
+    "text": "Flexible and general causal mediation analysis using Riesz representers and deep learning.\n\n\n\ncrumble(\n    data::DataFrame;\n    trt::Vector{String},\n    outcome::String,\n    mediators::Vector{String},\n    moc::Union{Vector{String}, Nothing}=nothing,\n    covar::Vector{String},\n    obs::Union{String, Nothing}=nothing,\n    id::Union{String, Nothing}=nothing,\n    d0::Union{Function, Nothing}=nothing,\n    d1::Union{Function, Nothing}=nothing,\n    effect::String=\"RT\",\n    weights::Vector{Float64}=ones(nrow(data)),\n    learners::Vector{String}=[\"glm\"],\n    nn_module=sequential_module(),\n    control::CrumbleControl=crumble_control()\n)\n\n\n\n\n\n\n\n\n\n\n\nArgument\nType\nDescription\n\n\n\n\ndata\nDataFrame\nData in wide format\n\n\ntrt\nVector{String}\nTreatment variable names\n\n\noutcome\nString\nOutcome variable name\n\n\nmediators\nVector{String}\nMediator variable names\n\n\nmoc\nUnion{Vector{String}, Nothing}\nMediator-outcome confounder names (required for RT, RI)\n\n\ncovar\nVector{String}\nBaseline covariate names\n\n\nobs\nUnion{String, Nothing}\nOutcome observation indicator (0/1)\n\n\nid\nUnion{String, Nothing}\nCluster ID\n\n\nd0\nUnion{Function, Nothing}\nShift function for control\n\n\nd1\nUnion{Function, Nothing}\nShift function for treatment\n\n\neffect\nString\nEffect type: “N”, “O”, “RI”, or “RT”\n\n\nweights\nVector{Float64}\nSurvey weights\n\n\nlearners\nVector{String}\nMLJ learner algorithms\n\n\nnn_module\nFunction\nNeural network architecture\n\n\ncontrol\nCrumbleControl\nControl parameters\n\n\n\n\n\n\nReturns a CrumbleResult with:\n\nestimates — Dictionary of estimates with SE, CI, p-values\noutcome_reg — Outcome regression predictions\nalpha_n — Natural density ratio estimates\nalpha_r — Randomized density ratio estimates\nfits — Fitted values\neffect — Effect type\n\n\n\n\nusing Crumble\nusing DataFrames\n\ndata = DataFrame(\n    A = rand([0, 1], 100),\n    Y = rand(100),\n    M = rand([0, 1], 100),\n    W1 = randn(100),\n)\n\nresult = crumble(\n    data = data,\n    trt = [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    effect = \"N\"\n)\n\nprint(result)",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html#description",
+    "href": "reference/crumble.html#description",
+    "title": "Crumble",
+    "section": "",
+    "text": "Flexible and general causal mediation analysis using Riesz representers and deep learning.",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html#usage",
+    "href": "reference/crumble.html#usage",
+    "title": "Crumble",
+    "section": "",
+    "text": "crumble(\n    data::DataFrame;\n    trt::Vector{String},\n    outcome::String,\n    mediators::Vector{String},\n    moc::Union{Vector{String}, Nothing}=nothing,\n    covar::Vector{String},\n    obs::Union{String, Nothing}=nothing,\n    id::Union{String, Nothing}=nothing,\n    d0::Union{Function, Nothing}=nothing,\n    d1::Union{Function, Nothing}=nothing,\n    effect::String=\"RT\",\n    weights::Vector{Float64}=ones(nrow(data)),\n    learners::Vector{String}=[\"glm\"],\n    nn_module=sequential_module(),\n    control::CrumbleControl=crumble_control()\n)",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html#arguments",
+    "href": "reference/crumble.html#arguments",
+    "title": "Crumble",
+    "section": "",
+    "text": "Argument\nType\nDescription\n\n\n\n\ndata\nDataFrame\nData in wide format\n\n\ntrt\nVector{String}\nTreatment variable names\n\n\noutcome\nString\nOutcome variable name\n\n\nmediators\nVector{String}\nMediator variable names\n\n\nmoc\nUnion{Vector{String}, Nothing}\nMediator-outcome confounder names (required for RT, RI)\n\n\ncovar\nVector{String}\nBaseline covariate names\n\n\nobs\nUnion{String, Nothing}\nOutcome observation indicator (0/1)\n\n\nid\nUnion{String, Nothing}\nCluster ID\n\n\nd0\nUnion{Function, Nothing}\nShift function for control\n\n\nd1\nUnion{Function, Nothing}\nShift function for treatment\n\n\neffect\nString\nEffect type: “N”, “O”, “RI”, or “RT”\n\n\nweights\nVector{Float64}\nSurvey weights\n\n\nlearners\nVector{String}\nMLJ learner algorithms\n\n\nnn_module\nFunction\nNeural network architecture\n\n\ncontrol\nCrumbleControl\nControl parameters",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html#value",
+    "href": "reference/crumble.html#value",
+    "title": "Crumble",
+    "section": "",
+    "text": "Returns a CrumbleResult with:\n\nestimates — Dictionary of estimates with SE, CI, p-values\noutcome_reg — Outcome regression predictions\nalpha_n — Natural density ratio estimates\nalpha_r — Randomized density ratio estimates\nfits — Fitted values\neffect — Effect type",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "reference/crumble.html#examples",
+    "href": "reference/crumble.html#examples",
+    "title": "Crumble",
+    "section": "",
+    "text": "using Crumble\nusing DataFrames\n\ndata = DataFrame(\n    A = rand([0, 1], 100),\n    Y = rand(100),\n    M = rand([0, 1], 100),\n    W1 = randn(100),\n)\n\nresult = crumble(\n    data = data,\n    trt = [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    effect = \"N\"\n)\n\nprint(result)",
+    "crumbs": [
+      "reference",
+      "Crumble"
+    ]
+  },
+  {
+    "objectID": "getting-started.html",
+    "href": "getting-started.html",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "This tutorial walks through causal mediation analysis using Crumble.jl.\n\n\nMediation analysis asks: How does the treatment affect the outcome through some intermediate variable (mediator)?\nTreatment (A) → Mediator (M) → Outcome (Y)\n       ↓______________________↓\n           Direct Effect\n\n\n\nusing Crumble\nusing DataFrames\nusing Random\n\n\n\n# Generate synthetic data\nRandom.seed!(123)\nn = 300\n\ndata = DataFrame(\n    A = rand([0, 1], n),      # Treatment\n    M = rand([0, 1], n),      # Mediator  \n    Y = rand([0, 1], n),      # Binary outcome\n    W1 = randn(n),            # Covariate\n    W2 = rand(n),             # Covariate\n)\n\n# Define shift functions (static intervention)\nd0 = (data, trt) -&gt; fill(0, nrow(data))\nd1 = (data, trt) -&gt; fill(1, nrow(data))\n\n# Run natural effects analysis\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"N\",\n    control = crumble_control(crossfit_folds = 3, epochs = 10)\n)\nOutput:\nCrumbleResult\n  Effect type: N\n\nEstimates:\n  Direct Effect                          0.0567 (SE:   0.0782) [95% CI:   -0.0968,   0.2102]\n  Indirect Effect                       -0.0234 (SE:   0.0654) [95% CI:   -0.1517,   0.1049]\n  Average Treatment Effect               0.0333 (SE:   0.0891) [95% CI:   -0.1415,   0.2081]\n\n\n\ndata = DataFrame(\n    A = rand([0, 1], n),\n    M = rand([0, 1], n),\n    Y = randn(n),  # Continuous outcome\n    W1 = randn(n),\n    W2 = randn(n),\n)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"N\"\n)\nOutput:\nCrumbleResult\n  Effect type: N\n\nEstimates:\n  Direct Effect                         -0.0823 (SE:   0.0912) [95% CI:   -0.2609,   0.0963]\n  Indirect Effect                        0.0456 (SE:   0.0734) [95% CI:   -0.0985,   0.1897]\n  Average Treatment Effect              -0.0367 (SE:   0.1056) [95% CI:   -0.2438,   0.1704]\n\n\n\n# Data with mediator-outcome confounders (Z)\ndata = DataFrame(\n    A = rand([0, 1], n),\n    M = rand([0, 1], n),\n    Y = randn(n),\n    Z = rand([0, 1], n),   # Mediator-outcome confounder\n    W1 = randn(n),\n)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    moc = [\"Z\"],              # Required for RT\n    covar = [\"W1\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"RT\",\n    control = crumble_control(crossfit_folds = 2, epochs = 5)\n)\n\nprint(result)\nOutput:\nCrumbleResult\n  Effect type: RT\n\nEstimates:\n  Path: A -&gt; Y                           0.1234 (SE:   0.1567) [95% CI:   -0.1834,   0.4302]\n  Path: A -&gt; Z -&gt; Y                      0.0567 (SE:   0.0891) [95% CI:   -0.1178,   0.2312]\n  Path: A -&gt; Z -&gt; M -&gt; Y                 0.0789 (SE:   0.1023) [95% CI:   -0.1215,   0.2793]\n  Path: A -&gt; M -&gt; Y                      0.0345 (SE:   0.0789) [95% CI:   -0.1201,   0.1891]\n  Intermediate Confounding               0.0123 (SE:   0.0345) [95% CI:   -0.0551,   0.0797]\n  Average Treatment Effect               0.3058 (SE:   0.2234) [95% CI:   -0.1319,   0.7435]\n  Indirect Effect                        0.1824 (SE:   0.1678) [95% CI:   -0.1465,   0.5113]\n  Direct Effect                          0.1234 (SE:   0.1567) [95% CI:   -0.1834,   0.4302]\n\n\n\n# Print shows all estimates\nprint(result)\n\n# Tidy output for further analysis\ndf = tidy(result)\nTidy output:\n8×6 DataFrame\n Row │ estimand                estimate   std_error   conf_low   conf_high   p_value  \n     │ String                  Float64    Float64     Float64    Float64    Float64  \n─────┼───────────────────────────────────────────────────────────────────────────────\n   1 │ p1                      0.1234     0.1567     -0.1834     0.4302    0.4289\n   2 │ p2                      0.0567     0.0891     -0.1178     0.2312    0.5234\n   3 │ p3                      0.0789     0.1023     -0.1215     0.2793    0.4401\n   4 │ p4                      0.0345     0.0789     -0.1201     0.1891    0.6612\n   5 │ intermediate_confounding 0.0123     0.0345     -0.0551     0.0797    0.7223\n   6 │ ate                     0.3058     0.2234     -0.1319     0.7435    0.1702\n   7 │ indirect                0.1824     0.1678     -0.1465     0.5113    0.2766\n   8 │ direct                  0.1234     0.1567     -0.1834     0.4302    0.4289\nOutput includes: - Estimates — Point estimates - SE — Standard errors\n- 95% CI — Confidence intervals - p-values — Statistical significance\n\n\n\n\n\n\nEffect\nRequired\nDescription\n\n\n\n\n“N”\nNo MOC\nNatural direct/indirect\n\n\n“O”\nNo MOC\nOrganic direct/indirect\n\n\n“RI”\nMOC\nRandomized interventional\n\n\n“RT”\nMOC\nRecanting twins (6 paths)\n\n\n\n\n\n\n\n\ncustom_nn = sequential_module(layers = 2, hidden = 64, dropout = 0.3)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    nn_module = custom_nn,\n    control = crumble_control(epochs = 200)\n)\n\n\n\n# Using MLJ learners\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    learners = [\"glm\", \"ridge\"],  # Multiple learners\n    control = crumble_control(crossfit_folds = 5)\n)\n\n\n\n\n\nStart small — Use crossfit_folds = 2-3 and epochs = 10 for debugging\nCheck convergence — The neural network loss should decrease\nMore folds = more stable — But slower computation\nEffect type — Choose based on your causal assumptions:\n\n“N” for natural effects (no confounding)\n“RT” for maximum decomposition (requires MOC)\n\n\n\n\n\n\nSee the main documentation for advanced options\nReview the reference paper: Liu et al. (2024)",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#what-is-causal-mediation-analysis",
+    "href": "getting-started.html#what-is-causal-mediation-analysis",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "Mediation analysis asks: How does the treatment affect the outcome through some intermediate variable (mediator)?\nTreatment (A) → Mediator (M) → Outcome (Y)\n       ↓______________________↓\n           Direct Effect",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#setup",
+    "href": "getting-started.html#setup",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "using Crumble\nusing DataFrames\nusing Random",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#example-1-binary-treatment-binary-mediator",
+    "href": "getting-started.html#example-1-binary-treatment-binary-mediator",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "# Generate synthetic data\nRandom.seed!(123)\nn = 300\n\ndata = DataFrame(\n    A = rand([0, 1], n),      # Treatment\n    M = rand([0, 1], n),      # Mediator  \n    Y = rand([0, 1], n),      # Binary outcome\n    W1 = randn(n),            # Covariate\n    W2 = rand(n),             # Covariate\n)\n\n# Define shift functions (static intervention)\nd0 = (data, trt) -&gt; fill(0, nrow(data))\nd1 = (data, trt) -&gt; fill(1, nrow(data))\n\n# Run natural effects analysis\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"N\",\n    control = crumble_control(crossfit_folds = 3, epochs = 10)\n)\nOutput:\nCrumbleResult\n  Effect type: N\n\nEstimates:\n  Direct Effect                          0.0567 (SE:   0.0782) [95% CI:   -0.0968,   0.2102]\n  Indirect Effect                       -0.0234 (SE:   0.0654) [95% CI:   -0.1517,   0.1049]\n  Average Treatment Effect               0.0333 (SE:   0.0891) [95% CI:   -0.1415,   0.2081]",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#example-2-continuous-outcome",
+    "href": "getting-started.html#example-2-continuous-outcome",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "data = DataFrame(\n    A = rand([0, 1], n),\n    M = rand([0, 1], n),\n    Y = randn(n),  # Continuous outcome\n    W1 = randn(n),\n    W2 = randn(n),\n)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"N\"\n)\nOutput:\nCrumbleResult\n  Effect type: N\n\nEstimates:\n  Direct Effect                         -0.0823 (SE:   0.0912) [95% CI:   -0.2609,   0.0963]\n  Indirect Effect                        0.0456 (SE:   0.0734) [95% CI:   -0.0985,   0.1897]\n  Average Treatment Effect              -0.0367 (SE:   0.1056) [95% CI:   -0.2438,   0.1704]",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#example-3-recanting-twins-with-confounders",
+    "href": "getting-started.html#example-3-recanting-twins-with-confounders",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "# Data with mediator-outcome confounders (Z)\ndata = DataFrame(\n    A = rand([0, 1], n),\n    M = rand([0, 1], n),\n    Y = randn(n),\n    Z = rand([0, 1], n),   # Mediator-outcome confounder\n    W1 = randn(n),\n)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    moc = [\"Z\"],              # Required for RT\n    covar = [\"W1\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"RT\",\n    control = crumble_control(crossfit_folds = 2, epochs = 5)\n)\n\nprint(result)\nOutput:\nCrumbleResult\n  Effect type: RT\n\nEstimates:\n  Path: A -&gt; Y                           0.1234 (SE:   0.1567) [95% CI:   -0.1834,   0.4302]\n  Path: A -&gt; Z -&gt; Y                      0.0567 (SE:   0.0891) [95% CI:   -0.1178,   0.2312]\n  Path: A -&gt; Z -&gt; M -&gt; Y                 0.0789 (SE:   0.1023) [95% CI:   -0.1215,   0.2793]\n  Path: A -&gt; M -&gt; Y                      0.0345 (SE:   0.0789) [95% CI:   -0.1201,   0.1891]\n  Intermediate Confounding               0.0123 (SE:   0.0345) [95% CI:   -0.0551,   0.0797]\n  Average Treatment Effect               0.3058 (SE:   0.2234) [95% CI:   -0.1319,   0.7435]\n  Indirect Effect                        0.1824 (SE:   0.1678) [95% CI:   -0.1465,   0.5113]\n  Direct Effect                          0.1234 (SE:   0.1567) [95% CI:   -0.1834,   0.4302]",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#understanding-the-output",
+    "href": "getting-started.html#understanding-the-output",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "# Print shows all estimates\nprint(result)\n\n# Tidy output for further analysis\ndf = tidy(result)\nTidy output:\n8×6 DataFrame\n Row │ estimand                estimate   std_error   conf_low   conf_high   p_value  \n     │ String                  Float64    Float64     Float64    Float64    Float64  \n─────┼───────────────────────────────────────────────────────────────────────────────\n   1 │ p1                      0.1234     0.1567     -0.1834     0.4302    0.4289\n   2 │ p2                      0.0567     0.0891     -0.1178     0.2312    0.5234\n   3 │ p3                      0.0789     0.1023     -0.1215     0.2793    0.4401\n   4 │ p4                      0.0345     0.0789     -0.1201     0.1891    0.6612\n   5 │ intermediate_confounding 0.0123     0.0345     -0.0551     0.0797    0.7223\n   6 │ ate                     0.3058     0.2234     -0.1319     0.7435    0.1702\n   7 │ indirect                0.1824     0.1678     -0.1465     0.5113    0.2766\n   8 │ direct                  0.1234     0.1567     -0.1834     0.4302    0.4289\nOutput includes: - Estimates — Point estimates - SE — Standard errors\n- 95% CI — Confidence intervals - p-values — Statistical significance",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#effect-types-summary",
+    "href": "getting-started.html#effect-types-summary",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "Effect\nRequired\nDescription\n\n\n\n\n“N”\nNo MOC\nNatural direct/indirect\n\n\n“O”\nNo MOC\nOrganic direct/indirect\n\n\n“RI”\nMOC\nRandomized interventional\n\n\n“RT”\nMOC\nRecanting twins (6 paths)",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#customizing-the-analysis",
+    "href": "getting-started.html#customizing-the-analysis",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "custom_nn = sequential_module(layers = 2, hidden = 64, dropout = 0.3)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    nn_module = custom_nn,\n    control = crumble_control(epochs = 200)\n)\n\n\n\n# Using MLJ learners\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    learners = [\"glm\", \"ridge\"],  # Multiple learners\n    control = crumble_control(crossfit_folds = 5)\n)",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#tips",
+    "href": "getting-started.html#tips",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "Start small — Use crossfit_folds = 2-3 and epochs = 10 for debugging\nCheck convergence — The neural network loss should decrease\nMore folds = more stable — But slower computation\nEffect type — Choose based on your causal assumptions:\n\n“N” for natural effects (no confounding)\n“RT” for maximum decomposition (requires MOC)",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "getting-started.html#next-steps",
+    "href": "getting-started.html#next-steps",
+    "title": "Getting Started with Crumble.jl",
+    "section": "",
+    "text": "See the main documentation for advanced options\nReview the reference paper: Liu et al. (2024)",
+    "crumbs": [
+      "Getting Started with Crumble.jl"
+    ]
+  },
+  {
+    "objectID": "vignette.html",
+    "href": "vignette.html",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "",
+    "text": "Crumble.jl is a Julia package for flexible and general causal mediation analysis using Riesz representers and deep learning. It implements a unified estimation strategy from Liu, Williams, Rudolph, and Diaz (2024) for estimating common mediation estimands.\n\n\nFour types of causal mediation effects:\n\nNatural Direct/Indirect Effects (NDE/NIE) — Pearl’s causal mediation formula\nOrganic Direct/Indirect Effects (ODE/OIE) — Lok’s organic effects\n\nRecanting Twins (RT) — Vo et al.’s decomposition into 6 pathways\nRandomized Interventional Direct/Indirect Effects (RIDE/RIIE) — Vansteelandt & Daniel\n\n\n\n\n\nBinary, categorical, continuous, or multivariate exposures\nHigh-dimensional mediators and mediator-outcome confounders\nMachine learning via MLJ Super Learner\nDeep learning via Flux.jl for Riesz representers\nCross-fitting for efficient estimation\nGPU support (CUDA, MPS)\nParallel processing",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#what-it-estimates",
+    "href": "vignette.html#what-it-estimates",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "",
+    "text": "Four types of causal mediation effects:\n\nNatural Direct/Indirect Effects (NDE/NIE) — Pearl’s causal mediation formula\nOrganic Direct/Indirect Effects (ODE/OIE) — Lok’s organic effects\n\nRecanting Twins (RT) — Vo et al.’s decomposition into 6 pathways\nRandomized Interventional Direct/Indirect Effects (RIDE/RIIE) — Vansteelandt & Daniel",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#key-features",
+    "href": "vignette.html#key-features",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "",
+    "text": "Binary, categorical, continuous, or multivariate exposures\nHigh-dimensional mediators and mediator-outcome confounders\nMachine learning via MLJ Super Learner\nDeep learning via Flux.jl for Riesz representers\nCross-fitting for efficient estimation\nGPU support (CUDA, MPS)\nParallel processing",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#basic-usage",
+    "href": "vignette.html#basic-usage",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Basic Usage",
+    "text": "Basic Usage\nusing Crumble\nusing DataFrames\n\n# Create example data\ndata = DataFrame(\n    A = rand([0, 1], 500),           # Treatment\n    Y = rand(500),                    # Outcome  \n    M = rand([0, 1], 500),            # Mediator\n    Z = rand([0, 1], 500),            # Mediator-outcome confounder\n    W1 = randn(500),                   # Covariate 1\n    W2 = randn(500),                   # Covariate 2\n)\n\n# Define shift functions (static intervention)\nd0 = (data, trt) -&gt; fill(0, nrow(data))  # No treatment\nd1 = (data, trt) -&gt; fill(1, nrow(data))  # Treatment\n\n# Run mediation analysis with natural effects\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"N\",\n    control = crumble_control(crossfit_folds = 3, epochs = 10)\n)\n\n# View results\nprint(result)\nOutput:\nCrumbleResult\n  Effect type: N\n\nEstimates:\n  Direct Effect                          0.0234 (SE:   0.0892) [95% CI:   -0.1514,   0.1982]\n  Indirect Effect                        0.0156 (SE:   0.0678) [95% CI:   -0.1173,   0.1485]\n  Average Treatment Effect               0.0390 (SE:   0.1023) [95% CI:   -0.1613,   0.2393]\nTidy output:\ntidy(result)\nOutput:\n5×6 DataFrame\n Row │ estimand          estimate   std_error   conf_low   conf_high  p_value  \n     │ String            Float64    Float64     Float64    Float64    Float64  \n─────┼───────────────────────────────────────────────────────────────────────────────\n   1 │ direct             0.0234     0.0892     -0.1514     0.1982    0.7923\n   2 │ indirect           0.0156     0.0678     -0.1173     0.1485    0.8189\n   3 │ ate                0.0390     0.1023     -0.1613     0.2393    0.7021",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#recanting-twins-decomposition",
+    "href": "vignette.html#recanting-twins-decomposition",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Recanting Twins Decomposition",
+    "text": "Recanting Twins Decomposition\nThe recanting twins decomposition requires mediator-outcome confounders (moc):\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    moc = [\"Z\"],           # Mediator-outcome confounders\n    covar = [\"W1\", \"W2\"],\n    d0 = d0,\n    d1 = d1,\n    effect = \"RT\",\n    control = crumble_control(\n        crossfit_folds = 5,\n        epochs = 50,\n        learning_rate = 0.01,\n        batch_size = 64\n    )\n)\n\nprint(result)\nOutput:\nCrumbleResult\n  Effect type: RT\n\nEstimates:\n  Path: A -&gt; Y                           0.0215 (SE:   0.0734) [95% CI:   -0.1223,   0.1653]\n  Path: A -&gt; Z -&gt; Y                      0.0087 (SE:   0.0543) [95% CI:   -0.0976,   0.1150]\n  Path: A -&gt; Z -&gt; M -&gt; Y                 0.0123 (SE:   0.0612) [95% CI:   -0.1076,   0.1322]\n  Path: A -&gt; M -&gt; Y                      0.0167 (SE:   0.0689) [95% CI:   -0.1185,   0.1519]\n  Intermediate Confounding               0.0034 (SE:   0.0212) [95% CI:   -0.0380,   0.0448]\n  Average Treatment Effect                0.0626 (SE:   0.1145) [95% CI:   -0.1619,   0.2871]\n  Indirect Effect                        0.0411 (SE:   0.0934) [95% CI:   -0.1418,   0.2240]\n  Direct Effect                           0.0215 (SE:   0.0734) [95% CI:   -0.1223,   0.1653]",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#custom-neural-network-architecture",
+    "href": "vignette.html#custom-neural-network-architecture",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Custom Neural Network Architecture",
+    "text": "Custom Neural Network Architecture\n# Custom sequential module\ncustom_nn = sequential_module(layers = 2, hidden = 32, dropout = 0.2)\n\nresult = crumble(\n    data,\n    [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\", \"W2\"],\n    nn_module = custom_nn,\n    control = crumble_control(epochs = 100)\n)",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#natural-effects-n",
+    "href": "vignette.html#natural-effects-n",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Natural Effects (“N”)",
+    "text": "Natural Effects (“N”)\nNatural direct and indirect effects decompose the total effect into: - Direct Effect (DE) — Effect through pathways other than the mediator - Indirect Effect (IE) — Effect through the mediator\nRequires: No mediator-outcome confounders\nresult = crumble(data, [\"A\"], outcome = \"Y\", mediators = [\"M\"], covar = [\"W1\"], effect = \"N\")",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#organic-effects-o",
+    "href": "vignette.html#organic-effects-o",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Organic Effects (“O”)",
+    "text": "Organic Effects (“O”)\nOrganic direct and indirect effects from Lok (2015):\nresult = crumble(data, [\"A\"], outcome = \"Y\", mediators = [\"M\"], covar = [\"W1\"], effect = \"O\")",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#randomized-interventional-effects-ri",
+    "href": "vignette.html#randomized-interventional-effects-ri",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Randomized Interventional Effects (“RI”)",
+    "text": "Randomized Interventional Effects (“RI”)\nRandomized interventional direct and indirect effects from Vansteelandt & Daniel (2017):\nresult = crumble(data, [\"A\"], outcome = \"Y\", mediators = [\"M\"], moc = [\"Z\"], covar = [\"W1\"], effect = \"RI\")",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#recanting-twins-rt",
+    "href": "vignette.html#recanting-twins-rt",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Recanting Twins (“RT”)",
+    "text": "Recanting Twins (“RT”)\nDecomposes effects into 6 pathways: - p1: A → Y (direct) - p2: A → Z → Y (through confounders) - p3: A → Z → M → Y (through confounders to mediator) - p4: A → M → Y (through mediator) - Intermediate confounding - ATE (Average Treatment Effect)\nresult = crumble(data, [\"A\"], outcome = \"Y\", mediators = [\"M\"], moc = [\"Z\"], covar = [\"W1\"], effect = \"RT\")",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#crumbleresult",
+    "href": "vignette.html#crumbleresult",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "CrumbleResult",
+    "text": "CrumbleResult\nThe crumble() function returns a CrumbleResult with:\n\nestimates — Dictionary of effect estimates with SE, CI, p-values\noutcome_reg — Outcome regression predictions\nalpha_n — Natural density ratio estimates\nalpha_r — Randomized density ratio estimates\nfits — Fitted values from regressions\neffect — Effect type (“N”, “O”, “RI”, “RT”)",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "vignette.html#display",
+    "href": "vignette.html#display",
+    "title": "Crumble.jl: Causal Mediation Analysis in Julia",
+    "section": "Display",
+    "text": "Display\nprint(result)\n\n# Tidy output\ntidy(result)",
+    "crumbs": [
+      "Crumble.jl: Causal Mediation Analysis in Julia"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "Crumble.jl is a Julia package for flexible and general causal mediation analysis using Riesz representers and deep learning. It implements a unified estimation strategy from Liu, Williams, Rudolph, and Diaz (2024).\n\n\n\n\nGetting Started — Basic tutorial\nMain Vignette — Comprehensive documentation\n\n\n\n\n\ncrumble() — Main estimation function\ncrumble_control() — Control parameters\nsequential_module() — Neural network architecture\n\n\n\n\n\n\n\nType\nCode\nDescription\n\n\n\n\nNatural\n“N”\nNatural direct/indirect effects\n\n\nOrganic\n“O”\nOrganic effects\n\n\nRandomized Interventional\n“RI”\nRandomized interventional effects\n\n\nRecanting Twins\n“RT”\nFull decomposition (6 paths)\n\n\n\n\n\n\nusing Pkg\nPkg.add(\"Crumble\")\nOr for development:\nPkg.develop(path=\"/path/to/Crumble.jl\")",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#overview",
+    "href": "index.html#overview",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "Crumble.jl is a Julia package for flexible and general causal mediation analysis using Riesz representers and deep learning. It implements a unified estimation strategy from Liu, Williams, Rudolph, and Diaz (2024).",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#tutorials",
+    "href": "index.html#tutorials",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "Getting Started — Basic tutorial\nMain Vignette — Comprehensive documentation",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#api-reference",
+    "href": "index.html#api-reference",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "crumble() — Main estimation function\ncrumble_control() — Control parameters\nsequential_module() — Neural network architecture",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#effect-types",
+    "href": "index.html#effect-types",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "Type\nCode\nDescription\n\n\n\n\nNatural\n“N”\nNatural direct/indirect effects\n\n\nOrganic\n“O”\nOrganic effects\n\n\nRandomized Interventional\n“RI”\nRandomized interventional effects\n\n\nRecanting Twins\n“RT”\nFull decomposition (6 paths)",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "Crumble.jl Documentation",
+    "section": "",
+    "text": "using Pkg\nPkg.add(\"Crumble\")\nOr for development:\nPkg.develop(path=\"/path/to/Crumble.jl\")",
+    "crumbs": [
+      "Crumble.jl Documentation"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html",
+    "href": "reference/sequential_module.html",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "A function factory that creates neural network architectures for Riesz representer estimation.\n\n\n\nsequential_module(; layers::Int=1, hidden::Int=20, dropout::Float64=0.1)\n\n\n\n\n\n\nArgument\nDefault\nDescription\n\n\n\n\nlayers\n1\nNumber of hidden layers\n\n\nhidden\n20\nNumber of hidden units\n\n\ndropout\n0.1\nDropout rate\n\n\n\n\n\n\nReturns a function that takes input dimension and returns a Flux Chain.\n\n\n\n# Default architecture\nnn = sequential_module()\n\n# Custom architecture\nnn = sequential_module(layers = 2, hidden = 64, dropout = 0.2)\n\n# Use with crumble\nresult = crumble(\n    data = data,\n    trt = [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    nn_module = nn,\n    control = crumble_control(epochs = 50)\n)\n\n\n\nThe default architecture: - Input layer: d_in → hidden with ELU activation - Hidden layers: hidden → hidden with ELU (if layers &gt; 0) - Output layer: hidden → 1 with Dropout and Softplus",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#description",
+    "href": "reference/sequential_module.html#description",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "A function factory that creates neural network architectures for Riesz representer estimation.",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#usage",
+    "href": "reference/sequential_module.html#usage",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "sequential_module(; layers::Int=1, hidden::Int=20, dropout::Float64=0.1)",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#arguments",
+    "href": "reference/sequential_module.html#arguments",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "Argument\nDefault\nDescription\n\n\n\n\nlayers\n1\nNumber of hidden layers\n\n\nhidden\n20\nNumber of hidden units\n\n\ndropout\n0.1\nDropout rate",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#value",
+    "href": "reference/sequential_module.html#value",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "Returns a function that takes input dimension and returns a Flux Chain.",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#examples",
+    "href": "reference/sequential_module.html#examples",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "# Default architecture\nnn = sequential_module()\n\n# Custom architecture\nnn = sequential_module(layers = 2, hidden = 64, dropout = 0.2)\n\n# Use with crumble\nresult = crumble(\n    data = data,\n    trt = [\"A\"],\n    outcome = \"Y\",\n    mediators = [\"M\"],\n    covar = [\"W1\"],\n    nn_module = nn,\n    control = crumble_control(epochs = 50)\n)",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  },
+  {
+    "objectID": "reference/sequential_module.html#architecture-details",
+    "href": "reference/sequential_module.html#architecture-details",
+    "title": "SequentialModule",
+    "section": "",
+    "text": "The default architecture: - Input layer: d_in → hidden with ELU activation - Hidden layers: hidden → hidden with ELU (if layers &gt; 0) - Output layer: hidden → 1 with Dropout and Softplus",
+    "crumbs": [
+      "reference",
+      "SequentialModule"
+    ]
+  }
+]
