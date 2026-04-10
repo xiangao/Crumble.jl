@@ -36,9 +36,10 @@ mutable struct CrumbleData
 
     function CrumbleData(data::DataFrame, vars::CrumbleVars, weights, d0=nothing, d1=nothing)
         if !isempty(vars.Z)
+            original_z = vars.Z
             z_ohe = one_hot_encode(data, vars.Z)
             vars = CrumbleVars(vars.A, vars.Y, vars.M, Symbol.(names(z_ohe)), vars.W, vars.C, vars.id)
-            data = select(data, Not(vars.Z))
+            data = DataFrames.select(data, Not(original_z))
             data = hcat(data, z_ohe)
         end
 

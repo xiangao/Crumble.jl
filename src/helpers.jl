@@ -1,3 +1,15 @@
+function one_hot_encode(data::DataFrame, cols::Vector{Symbol})
+    result = DataFrame()
+    for col in cols
+        vals = sort(unique(skipmissing(data[!, col])))
+        for v in vals
+            colname = Symbol("$(col)_$(v)")
+            result[!, colname] = Int.(data[!, col] .== v)
+        end
+    end
+    return result
+end
+
 function recombine_theta(x, folds)
     result = Dict{String, Any}()
     
@@ -72,6 +84,7 @@ function recombine_alpha(x, folds)
                     "alpha1" => Float64[],
                     "alpha2" => Float64[],
                     "alpha3" => Float64[],
+                    "alpha4" => Float64[],
                 )
             end
             for (alpha_key, alpha_val) in val

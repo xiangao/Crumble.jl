@@ -23,20 +23,20 @@ function linear_permutation(data::Matrix{Float64})
     D = pairwise(Euclidean(), data, dims=1)
     D = D ./ maximum(D)
 
-    model = Model(HiGHS.Optimizer)
-    set_silent(model)
+    model = JuMP.Model(HiGHS.Optimizer)
+    JuMP.set_silent(model)
 
-    @variable(model, x[1:n, 1:n], Bin)
-    @constraint(model, [i=1:n], sum(x[i, :]) == 1)
-    @constraint(model, [j=1:n], sum(x[:, j]) == 1)
-    @objective(model, Min, sum(D[i, j] * x[i, j] for i in 1:n, j in 1:n))
+    JuMP.@variable(model, x[1:n, 1:n], Bin)
+    JuMP.@constraint(model, [i=1:n], sum(x[i, :]) == 1)
+    JuMP.@constraint(model, [j=1:n], sum(x[:, j]) == 1)
+    JuMP.@objective(model, Min, sum(D[i, j] * x[i, j] for i in 1:n, j in 1:n))
 
-    optimize!(model)
-    return value.(x)
+    JuMP.optimize!(model)
+    return JuMP.value.(x)
 end
 
 function set_zp(cd::CrumbleData, folds::Int)
-    fold_obj = make_folds(nrow(cd.data), folds, cd.id !== nothing ? cd.data[:, cd.id] : nothing)
+    fold_obj = make_folds(nrow(cd.data), folds, cd.vars.id !== nothing ? cd.data[:, cd.vars.id] : nothing)
 
     AW_cols = [cd.vars.A..., cd.vars.W...]
     AW_cols = [c for c in AW_cols if hasproperty(cd.data, c)]
@@ -58,14 +58,11 @@ function set_zp(cd::CrumbleData, folds::Int)
 
         P = linear_permutation(AW[idx, :])
         for z in names(Z)
-            permuted[i][Symbol(z)] = vec(P * Matrix{Float64}(Z[idx, z]))
+            permuted[i][Symbol(z)] = vec(P * reshape(Float64.(Vector(Z[idx, z])), :, 1))
         end
     end
 
-    result = Dict{Symbol, Vector{Float64}}(z => Vector{Float64}(undef, nrow(cd.data)) for z in names(Z))
-    for z in names(Z)
-        result[Symbol(z)] .= missing
-    end
+    result = Dict{Symbol, Vector{Float64}}(Symbol(z) => Vector{Float64}(undef, nrow(cd.data)) for z in names(Z))
 
     for (i, fold) in enumerate(fold_obj)
         idx = fold.validation_set
