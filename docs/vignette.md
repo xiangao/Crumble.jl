@@ -1,6 +1,6 @@
 ---
 title: "Crumble.jl: Causal Mediation Analysis in Julia"
-description: "Flexible and general causal mediation analysis using Riesz representers and deep learning"
+description: "Causal mediation analysis using Riesz representers and deep learning"
 author: "Ported from R package by Nicholas Williams"
 date: "2025"
 format: html
@@ -8,7 +8,8 @@ format: html
 
 # Introduction
 
-Crumble.jl is a Julia package for **flexible and general causal mediation analysis** using Riesz representers and deep learning. It implements a unified estimation strategy from Liu, Williams, Rudolph, and Diaz (2024) for estimating common mediation estimands.
+Crumble.jl implements causal mediation estimators based on Riesz representers.
+The estimands follow Liu, Williams, Rudolph, and Diaz (2024).
 
 ## What It Estimates
 
@@ -19,7 +20,7 @@ Four types of causal mediation effects:
 - **Recanting Twins (RT)** — Vo et al.'s decomposition into 6 pathways
 - **Randomized Interventional Direct/Indirect Effects (RIDE/RIIE)** — Vansteelandt & Daniel
 
-## Key Features
+## What is included
 
 - Binary, categorical, continuous, or multivariate exposures
 - High-dimensional mediators and mediator-outcome confounders

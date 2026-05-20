@@ -2,12 +2,13 @@
 
 ## Overview
 
-Crumble.jl is a Julia package for flexible and general causal mediation analysis using Riesz representers and deep learning. It implements a unified estimation strategy from Liu, Williams, Rudolph, and Diaz (2024).
+Crumble.jl implements causal mediation estimators based on Riesz representers.
+The estimands follow Liu, Williams, Rudolph, and Diaz (2024).
 
 ## Tutorials
 
 - [Getting Started](getting-started.md) — Basic tutorial
-- [Main Vignette](vignette.md) — Comprehensive documentation
+- [Main Vignette](vignette.md) — Longer worked example
 
 ## API Reference
 

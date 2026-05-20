@@ -1,6 +1,7 @@
 # Crumble.jl
 
-`Crumble.jl` is a Julia package for flexible causal mediation analysis using Riesz representers and neural network nuisance estimation.
+`Crumble.jl` implements causal mediation estimators based on Riesz
+representers. The examples use neural networks for the nuisance functions.
 
 ## Tutorials
 
