@@ -126,3 +126,8 @@ function normalize_weights(x)
     end
     return x ./ mean(x)
 end
+
+function is_binary(x)
+    unique_vals = unique(skipmissing(x))
+    return length(unique_vals) <= 2 && all(v -> v in (0, 1, 0.0, 1.0), unique_vals)
+end

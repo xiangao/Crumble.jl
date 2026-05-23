@@ -7,38 +7,30 @@ function calc_estimates_natural(eif_ns::Dict{String, Any}, weights::Vector{Float
         )
     end
     
-    keys_eif = collect(keys(eif_ns))
+    # Retrieve estimates using explicit keys to avoid unstable Dict key order
+    haskey_all = haskey(eif_ns, "100") && haskey(eif_ns, "000") && haskey(eif_ns, "111")
     
-    # Use available keys for calculation
-    if length(keys_eif) >= 1
-        est1 = eif_ns[keys_eif[1]]["estimate"]
-        se1 = eif_ns[keys_eif[1]]["std.error"]
-    else
-        est1, se1 = 0.0, 0.05
-    end
+    key_100 = haskey_all ? "100" : collect(keys(eif_ns))[1]
+    key_000 = haskey_all ? "000" : (length(keys(eif_ns)) >= 2 ? collect(keys(eif_ns))[2] : key_100)
+    key_111 = haskey_all ? "111" : (length(keys(eif_ns)) >= 3 ? collect(keys(eif_ns))[3] : key_000)
     
-    if length(keys_eif) >= 2
-        est2 = eif_ns[keys_eif[2]]["estimate"]
-        se2 = eif_ns[keys_eif[2]]["std.error"]
-    else
-        est2, se2 = 0.0, 0.05
-    end
+    est_100 = eif_ns[key_100]["estimate"]
+    se_100  = eif_ns[key_100]["std.error"]
     
-    if length(keys_eif) >= 3
-        est3 = eif_ns[keys_eif[3]]["estimate"]
-        se3 = eif_ns[keys_eif[3]]["std.error"]
-    else
-        est3, se3 = 0.0, 0.05
-    end
+    est_000 = eif_ns[key_000]["estimate"]
+    se_000  = eif_ns[key_000]["std.error"]
     
-    direct_est = est1 - est2
-    direct_se = sqrt(se1^2 + se2^2)
+    est_111 = eif_ns[key_111]["estimate"]
+    se_111  = eif_ns[key_111]["std.error"]
     
-    indirect_est = est3 - est1
-    indirect_se = sqrt(se3^2 + se1^2)
+    direct_est = est_100 - est_000
+    direct_se = sqrt(se_100^2 + se_000^2)
     
-    ate_est = est3 - est2
-    ate_se = sqrt(se3^2 + se2^2)
+    indirect_est = est_111 - est_100
+    indirect_se = sqrt(se_111^2 + se_100^2)
+    
+    ate_est = est_111 - est_000
+    ate_se = sqrt(se_111^2 + se_000^2)
     
     return Dict(
         "direct" => Dict("estimate" => direct_est, "std.error" => direct_se, 
