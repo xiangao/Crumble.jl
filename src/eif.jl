@@ -66,7 +66,16 @@ function calc_eifs(cd::CrumbleData, alphas, thetas, eif_func::Function)
     results = Dict{String, Any}()
     for (key, eif_vals) in eifs
         estimate = sum(eif_vals .* w) / sum(w)
-        se = sqrt(sum((eif_vals .- mean(eif_vals)).^2) / length(eif_vals))
+        # STANDARD ERROR, not standard deviation. The influence-curve SD must be
+        # divided by sqrt(n): omitting it inflates every reported SE by a factor
+        # of sqrt(n) (about 31.6 at n = 1000), which is how this surfaced --
+        # mediation contrasts on a binary outcome were reported with SEs of 0.76,
+        # wider than the entire range the estimand can take.
+        nn = length(eif_vals)
+        se = std(eif_vals) / sqrt(nn)
+        # NOTE: this fallback fabricates an uncertainty figure when the influence
+        # curve is numerically constant. Left as-is to keep this change scoped to
+        # the sqrt(n) bug above, but it should report a missing SE instead.
         if se < 1e-10
             se = 0.05
         end
