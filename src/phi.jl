@@ -61,8 +61,15 @@ function phi_n_alpha(train, valid, vars::CrumbleVars, architecture, params, cont
     Flux.testmode!(model)
     
     alpha1_valid = vec(model(X_valid')[:, 1])
-    alpha2_valid = ones(n_valid) .+ 0.1 * randn(n_valid) .* 0.1
-    alpha3_valid = ones(n_valid) .+ 0.1 * randn(n_valid) .* 0.1
+    # QUARANTINED: these two components were previously filled with random
+    # perturbations of one. Random numbers are not estimated Riesz representers,
+    # and anything computed from them is not an estimate of the target
+    # functional. Refuse to continue rather than return a number that looks real.
+    error("""
+          Crumble.jl: the Riesz representers alpha2 and alpha3 are not implemented.
+          The previous code substituted random values here, which silently produced
+          invalid estimates. See the prototype warning in the README.
+          """)
     
     jkl = replace("$(j)$(k)$(l)", "data_" => "")
     return Dict(
@@ -85,8 +92,13 @@ function estimate_phi_r_alpha(cd::CrumbleData, folds::Vector{CrossFitFold}, para
 
         alpha_rs[i] = Dict{String, Any}()
         for param in params[:randomized]
-            result = Dict("alpha1" => rand(nrow(valid.data)), "alpha2" => rand(nrow(valid.data)), 
-                         "alpha3" => rand(nrow(valid.data)), "alpha4" => rand(nrow(valid.data)))
+            # QUARANTINED: all four components were independent uniform random
+            # numbers. See the note above; this route is not implemented.
+            error("""
+                  Crumble.jl: the randomized-interventional Riesz representers are not
+                  implemented. The previous code substituted uniform random values.
+                  See the prototype warning in the README.
+                  """)
             key = replace("$(param["i"])$(param["j"])$(param["k"])$(param["l"])", "data_" => "", "zp" => "")
             alpha_rs[i][key] = result
         end

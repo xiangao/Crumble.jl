@@ -7,9 +7,10 @@ function eif_n(cd::CrumbleData, thetas, alphas, jkl::String)
     w = cd.weights
     
     if alphas === nothing || isempty(alphas)
-        # Simple estimator: Y - mean(Y)
-        eif_vals = Y .- mean(Y)
-        return eif_vals
+        # QUARANTINED: this returned Y .- mean(Y), whose mean is exactly zero and
+        # which is not the influence function of any requested functional.
+        error("Crumble.jl: eif_n called without Riesz representers; the influence " *
+              "function is undefined. This path previously returned a placeholder.")
     end
     
     # Get alpha values
@@ -42,18 +43,10 @@ function calc_eifs(cd::CrumbleData, alphas, thetas, eif_func::Function)
     w = cd.weights
     
     if alphas === nothing || isempty(alphas)
-        # Create simple placeholder estimates
-        Y = Vector{Float64}(cd.data[:, cd.vars.Y])
-        estimate = mean(Y)
-        se = std(Y) / sqrt(n)
-        
-        return Dict("111" => Dict(
-            "estimate" => estimate,
-            "std.error" => se,
-            "conf.low" => estimate - 1.96 * se,
-            "conf.high" => estimate + 1.96 * se,
-            "p.value" => 2 * (1 - cdf(Normal(), abs(estimate / se))),
-        ))
+        # QUARANTINED: this returned the sample mean of Y, labelled as the
+        # requested causal functional, with the naive SE of a sample mean.
+        error("Crumble.jl: calc_eifs called without Riesz representers. This path " *
+              "previously reported mean(Y) as the causal estimand.")
     end
     
     keys_list = collect(keys(alphas))
@@ -73,18 +66,17 @@ function calc_eifs(cd::CrumbleData, alphas, thetas, eif_func::Function)
         # wider than the entire range the estimand can take.
         nn = length(eif_vals)
         se = std(eif_vals) / sqrt(nn)
-        # NOTE: this fallback fabricates an uncertainty figure when the influence
-        # curve is numerically constant. Left as-is to keep this change scoped to
-        # the sqrt(n) bug above, but it should report a missing SE instead.
-        if se < 1e-10
-            se = 0.05
-        end
+        # A numerically constant influence curve means the SE is not identified
+        # from these draws. Report it as missing rather than inventing a value;
+        # this previously substituted the fabricated constant 0.05.
+        degenerate = se < 1e-10
         results[key] = Dict(
             "estimate" => estimate,
-            "std.error" => se,
-            "conf.low" => estimate - 1.96 * se,
-            "conf.high" => estimate + 1.96 * se,
-            "p.value" => 2 * (1 - cdf(Normal(), abs(estimate / se))),
+            "std.error" => degenerate ? NaN : se,
+            "conf.low" => degenerate ? NaN : estimate - 1.96 * se,
+            "conf.high" => degenerate ? NaN : estimate + 1.96 * se,
+            "p.value" => degenerate ? NaN : 2 * (1 - cdf(Normal(), abs(estimate / se))),
+            "influence" => eif_vals,
         )
     end
 

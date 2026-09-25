@@ -1,58 +1,73 @@
-function calc_estimates_natural(eif_ns::Dict{String, Any}, weights::Vector{Float64})
-    if eif_ns === nothing || isempty(eif_ns)
-        return Dict(
-            "direct" => Dict("estimate" => 0.0, "std.error" => 0.0, "conf.low" => 0.0, "conf.high" => 0.0, "p.value" => 1.0),
-            "indirect" => Dict("estimate" => 0.0, "std.error" => 0.0, "conf.low" => 0.0, "conf.high" => 0.0, "p.value" => 1.0),
-            "ate" => Dict("estimate" => 0.0, "std.error" => 0.0, "conf.low" => 0.0, "conf.high" => 0.0, "p.value" => 1.0),
-        )
-    end
-    
-    # Retrieve estimates using explicit keys to avoid unstable Dict key order
-    haskey_all = haskey(eif_ns, "100") && haskey(eif_ns, "000") && haskey(eif_ns, "111")
-    
-    key_100 = haskey_all ? "100" : collect(keys(eif_ns))[1]
-    key_000 = haskey_all ? "000" : (length(keys(eif_ns)) >= 2 ? collect(keys(eif_ns))[2] : key_100)
-    key_111 = haskey_all ? "111" : (length(keys(eif_ns)) >= 3 ? collect(keys(eif_ns))[3] : key_000)
-    
-    est_100 = eif_ns[key_100]["estimate"]
-    se_100  = eif_ns[key_100]["std.error"]
-    
-    est_000 = eif_ns[key_000]["estimate"]
-    se_000  = eif_ns[key_000]["std.error"]
-    
-    est_111 = eif_ns[key_111]["estimate"]
-    se_111  = eif_ns[key_111]["std.error"]
-    
-    direct_est = est_100 - est_000
-    direct_se = sqrt(se_100^2 + se_000^2)
-    
-    indirect_est = est_111 - est_100
-    indirect_se = sqrt(se_111^2 + se_100^2)
-    
-    ate_est = est_111 - est_000
-    ate_se = sqrt(se_111^2 + se_000^2)
-    
+"""
+    contrast(eif_a, eif_b, w)
+
+Form the contrast of two influence-function based estimates computed on the same
+sample. The two estimates share observations, so the covariance term is part of
+the variance of their difference. Using `sqrt(se_a^2 + se_b^2)` assumes
+independence and is wrong here: it overstates the SE when the two influence
+curves are positively correlated, which is the usual case.
+
+The correct quantity is the SD of the observation-level contrast influence
+function, `IF_a - IF_b`, divided by `sqrt(n)`.
+"""
+function contrast(eif_a::Vector{Float64}, eif_b::Vector{Float64}, w::Vector{Float64})
+    length(eif_a) == length(eif_b) || error("Crumble.jl: contrast influence functions have different lengths.")
+    d = eif_a .- eif_b
+    est = sum(d .* w) / sum(w)
+    n = length(d)
+    se = std(d) / sqrt(n)
+    degenerate = !isfinite(se) || se < 1e-10
     return Dict(
-        "direct" => Dict("estimate" => direct_est, "std.error" => direct_se, 
-                        "conf.low" => direct_est - 1.96*direct_se, "conf.high" => direct_est + 1.96*direct_se, 
-                        "p.value" => 2*(1-cdf(Normal(), abs(direct_est/direct_se)))),
-        "indirect" => Dict("estimate" => indirect_est, "std.error" => indirect_se,
-                          "conf.low" => indirect_est - 1.96*indirect_se, "conf.high" => indirect_est + 1.96*indirect_se,
-                          "p.value" => 2*(1-cdf(Normal(), abs(indirect_est/indirect_se)))),
-        "ate" => Dict("estimate" => ate_est, "std.error" => ate_se,
-                     "conf.low" => ate_est - 1.96*ate_se, "conf.high" => ate_est + 1.96*ate_se,
-                     "p.value" => 2*(1-cdf(Normal(), abs(ate_est/ate_se)))),
+        "estimate"   => est,
+        "std.error"  => degenerate ? NaN : se,
+        "conf.low"   => degenerate ? NaN : est - 1.96 * se,
+        "conf.high"  => degenerate ? NaN : est + 1.96 * se,
+        "p.value"    => degenerate ? NaN : 2 * (1 - cdf(Normal(), abs(est / se))),
     )
 end
 
+function calc_estimates_natural(eif_ns::Dict{String, Any}, weights::Vector{Float64})
+    if eif_ns === nothing || isempty(eif_ns)
+        # QUARANTINED: this returned zeros with zero SEs and p = 1, which reads as
+        # a precisely estimated null rather than as a failure.
+        error("Crumble.jl: calc_estimates_natural received no influence functions.")
+    end
+
+    # The three functionals are required by name. Substituting whichever keys
+    # happen to be present, as the previous code did, silently reports one
+    # estimand under another estimand's label.
+    for k in ("100", "000", "111")
+        haskey(eif_ns, k) || error("Crumble.jl: required functional \"$k\" is missing; " *
+                                   "cannot form the natural-effect contrasts.")
+    end
+
+    getif(k) = haskey(eif_ns[k], "influence") ? Vector{Float64}(eif_ns[k]["influence"]) :
+        error("Crumble.jl: functional \"$k\" carries no observation-level influence " *
+              "function, so a valid contrast SE cannot be formed.")
+
+    if_100, if_000, if_111 = getif("100"), getif("000"), getif("111")
+
+    return Dict(
+        "direct"   => contrast(if_100, if_000, weights),
+        "indirect" => contrast(if_111, if_100, weights),
+        "ate"      => contrast(if_111, if_000, weights),
+    )
+end
+
+# The organic, randomized-interventional and randomized-transported estimands are
+# distinct functionals. They previously all delegated to the natural-effect
+# calculation, so three different labels reported the same numbers.
 function calc_estimates_organic(eif_ns::Dict{String, Any}, weights::Vector{Float64})
-    return calc_estimates_natural(eif_ns, weights)
+    error("Crumble.jl: organic effects are not implemented; this previously " *
+          "returned the natural-effect estimates under an organic label.")
 end
 
 function calc_estimates_ri(eif_rs::Dict{String, Any}, weights::Vector{Float64})
-    return calc_estimates_natural(eif_rs, weights)
+    error("Crumble.jl: randomized-interventional effects are not implemented; this " *
+          "previously returned the natural-effect estimates under an RI label.")
 end
 
 function calc_estimates_rt(eif_ns::Dict{String, Any}, eif_rs::Dict{String, Any}, weights::Vector{Float64})
-    return calc_estimates_natural(eif_ns, weights)
+    error("Crumble.jl: randomized-transported effects are not implemented; this " *
+          "previously returned the natural-effect estimates under an RT label.")
 end
