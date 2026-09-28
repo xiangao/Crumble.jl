@@ -86,7 +86,7 @@ function riesz_nn(X, Xshift, w, Xvalid, control, nn_module)
     wt = Float32.(w)
     n = size(xt, 2)
     model = nn_module(size(xt, 1))
-    rule = Optimisers.OptimiserChain(Optimisers.WeightDecay(0.01f0), Optimisers.Adam(Float32(one_cycle_lr(0, control.epochs, control.learning_rate))))
+    rule = Optimisers.OptimiserChain(Optimisers.WeightDecay(Float32(control.weight_decay)), Optimisers.Adam(Float32(one_cycle_lr(0, control.epochs, control.learning_rate))))
     state = Optimisers.setup(rule, model)
     Flux.trainmode!(model)
     for epoch in 1:control.epochs

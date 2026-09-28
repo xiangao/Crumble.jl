@@ -72,6 +72,21 @@ using Flux
         end
     end
 
+    @testset "network representer is not shrunk" begin
+        # A weighted stage: the representer solving E[a h(A,Z,W)] = E[w h(0,Z,W)]
+        # has mean E[w] = 1 (take h = 1). R crumble's defaults (dropout 0.1, weight
+        # decay 0.01) give 0.957 here; the defaults used now give 1.007.
+        rng = MersenneTwister(21)
+        n = 4000
+        W = rand(rng, 0:2, n); A = Int.(rand(rng, n) .< 0.1 .+ 0.3 .* W)
+        Z = Int.(rand(rng, n) .< 0.2 .+ 0.3 .* A .+ 0.1 .* W)
+        w1 = [A[i] == 1 ? 1 / mean(A[W .== W[i]]) : 0.0 for i in 1:n]
+        X = Float64.(hcat(A, Z, W)); Xs = Float64.(hcat(zeros(n), Z, W))
+        Random.seed!(22)
+        a = Crumble.fit_alpha(X, Xs, w1, X, crumble_control(epochs = 100), sequential_module())
+        @test abs(mean(a.train) - mean(w1)) < 0.025
+    end
+
     @testset "alpha_cap bounds the representers" begin
         # A shift into a pattern with a single training observation gives a large
         # empirical representer; the cap must bound it on both train and valid rows.

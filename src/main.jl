@@ -1,4 +1,9 @@
-function sequential_module(; layers::Int = 1, hidden::Int = 20, dropout::Float64 = 0.1)
+# Defaults differ from R crumble (dropout 0.1, weight decay 0.01). Both shrink the
+# fitted Riesz representers toward zero: in the validation DGP their mean fell to
+# 0.81-0.87 where it must be 1, which biased the estimates (the recanting-twin path
+# p2 by half) and made the standard errors too small. Without them the fitted means
+# are 1.005-1.013 and the slope on the true representer 0.96-1.07.
+function sequential_module(; layers::Int = 1, hidden::Int = 20, dropout::Float64 = 0.0)
     return function (d_in::Int)
         Chain(
             Dense(d_in, hidden, elu),
@@ -37,11 +42,12 @@ function crumble_control(;
     riesz_basis::Symbol = :main,
     riesz_ridge::Float64 = 1e-8,
     alpha_cap::Float64 = Inf,
+    weight_decay::Float64 = 0.0,
 )
     riesz in (:nn, :linear) || throw(ArgumentError("riesz must be :nn or :linear"))
     riesz_basis in (:main, :saturated) || throw(ArgumentError("riesz_basis must be :main or :saturated"))
     CrumbleControl(crossfit_folds, mlr3superlearner_folds, zprime_folds, epochs, learning_rate,
-                   batch_size, device, riesz, riesz_basis, riesz_ridge, alpha_cap)
+                   batch_size, device, riesz, riesz_basis, riesz_ridge, alpha_cap, weight_decay)
 end
 
 """

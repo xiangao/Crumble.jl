@@ -15,39 +15,46 @@ treatment shifts — and **no number they produced should be used.**
 
 The current version is checked against the exact truth of an all-binary DGP with a
 treatment-affected mediator-outcome confounder (the `medoutcon` vignette's), where
-every functional can be computed by enumeration (`validation/`). With the neural
-Riesz representers, `glm` outcome regressions, 5 folds and `alpha_cap = 100`:
+every functional can be computed by enumeration (`validation/`).
 
-| effect | n | reps | truth | bias | sd | mean se | 95% coverage |
-|---|---|---|---|---|---|---|---|
-| RI direct | 1000 | 200 | -0.0740 | 0.0066 | 0.0884 | 0.0849 | 0.915 |
-| RI indirect | 1000 | 200 | -0.0246 | 0.0076 | 0.0668 | 0.0661 | 0.955 |
-| RI direct | 5000 | 100 | -0.0740 | 0.0039 | 0.0281 | 0.0247 | 0.890 |
-| RI indirect | 5000 | 100 | -0.0246 | 0.0039 | 0.0163 | 0.0174 | 0.930 |
-| RT direct | 1000 | 200 | -0.0645 | 0.0049 | 0.0457 | 0.0378 | 0.930 |
-| RT indirect | 1000 | 200 | -0.0252 | -0.0026 | 0.0175 | 0.0147 | 0.900 |
-| RT ATE | 1000 | 200 | -0.0834 | -0.0031 | 0.0384 | 0.0336 | 0.895 |
+**The influence functions are correct.** With every nuisance replaced by its true
+value (`validation/oracle.jl`), all estimands are unbiased and the IF standard error
+matches the sampling sd: coverage 0.944-0.957 at n = 1000 (1000 replications) and
+0.93-0.96 at n = 5000 (500). The cross-unit dependence created by the Z' permutation
+is negligible.
 
-The point estimates are close to unbiased; the sampling sd at n = 5000 (0.028)
-matches the efficient standard error `medoutcon` reports for this design. Two
-shortcomings remain. First, **the standard errors are mostly too small**, by up to 20%
-(most of the RT paths, the RI direct effect at n = 5000), and coverage is 0.88-0.95
-rather than 0.95. Part of the gap is variability the influence-function
-SE treats as fixed — the Z' permutation, the folds and the network initialisation
-(across-seed sd 0.005 on one n = 5000 sample for the RI direct effect) — but most
-of it is not; with the closed-form saturated representers the SE is calibrated
-(0.067 against sd 0.069 at n = 1000), which points at the regularised network
-representers. Second, the recanting-twin path `p2` (A -> Z -> Y) recovers only
-about half of its true value (-0.0082 against -0.0165). On identical data (n = 5000)
-the RI direct effect is -0.058 (se 0.022) here and -0.070 (se 0.028) from
-`medoutcon`.
+**The nuisance fits decide the rest.** With nonparametric fits (`learners =
+["saturated"]`, `riesz = :linear, riesz_basis = :saturated`) the estimator is
+unbiased with coverage 0.94-0.955 at n = 1000, recanting-twin paths included:
 
-Three departures from the R package, each deliberate:
+| effect | n | truth | bias | sd | mean se | coverage |
+|---|---|---|---|---|---|---|
+| RT direct | 1000 | -0.0645 | -0.0002 | 0.0508 | 0.0508 | 0.940 |
+| RT indirect | 1000 | -0.0252 | -0.0029 | 0.0317 | 0.0325 | 0.955 |
+| RT ATE | 1000 | -0.0834 | -0.0009 | 0.0379 | 0.0381 | 0.945 |
+| RT p2 (A->Z->Y) | 1000 | -0.0165 | 0.0008 | 0.0214 | 0.0229 | 0.950 |
+
+**Network representers: the R defaults are not used.** R crumble's network uses
+dropout 0.1 and weight decay 0.01. Both shrink the fitted representers toward zero:
+on an n = 5000 sample their means were 0.81-0.87 where they must be 1, with a slope
+of 0.66-0.89 on the true representer. The one-step correction is then only partly
+applied, which left bias (the RT path p2 recovered half its value) and standard
+errors up to 20% too small (coverage 0.88-0.95; `validation/results/*_Rdefaults.csv`).
+The defaults here are dropout 0 and weight decay 0, which on the same sample give
+means 1.005-1.013 and slopes 0.96-1.07, as good as the exact saturated fit
+(`validation/alpha_quality.jl`). A Monte Carlo run of the estimator with these
+defaults has not yet been completed; until it is, the nonparametric fits above are
+the validated configuration for discrete data.
+
+Four departures from the R package, each deliberate:
 
 - **Mini-batch weights.** In the Riesz loss the R code multiplies the full-sample
   weight vector by a mini-batch of outputs, which broadcasts to an `n x batch`
   matrix and so weights every observation by the mean weight. Here each batch uses
   its own observations' weights.
+- **Network regularisation.** Dropout 0 and weight decay 0 by default, for the
+  reason above; `sequential_module(dropout = 0.1)` and
+  `crumble_control(weight_decay = 0.01)` restore R's settings.
 - **Default shifts.** With a single 0/1 treatment, omitted `d0`/`d1` default to
   setting it to 0 and 1. (In R an omitted shift leaves the treatment unchanged and
   every effect is zero.)
@@ -67,7 +74,8 @@ pattern the shift needs, the loss has no minimiser there and the neural network
 drifts to arbitrarily large values. In the validation DGP at n = 1000 the true
 fourth-stage representer of the interventional direct effect peaks at 45, in a cell
 with about two expected observations per training fold; unbounded fits reached
-several thousand, and 107 of 200 replications missed the truth by more than 0.3. Check the fitted
+several thousand, and with R's network settings 107 of 200 replications missed the
+truth by more than 0.3. Check the fitted
 representers (`result.alpha_r`, `result.alpha_n`) and bound them with `alpha_cap`
 when overlap is weak.
 

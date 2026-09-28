@@ -55,6 +55,7 @@ struct CrumbleControl
     riesz_basis::Symbol           # for :linear — :main or :saturated
     riesz_ridge::Float64          # for :linear
     alpha_cap::Float64            # upper bound on every fitted representer (Inf = none)
+    weight_decay::Float64         # :nn — L2 penalty in Adam (R crumble: 0.01; default here 0)
 end
 
 struct CrumbleResult

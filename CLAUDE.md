@@ -94,3 +94,17 @@ weights — R broadcasts the full weight vector against the batch — or closed-
 thousands (true max 45). Validation in `validation/` (exact truth by enumeration);
 results and the two open problems (SEs up to 20% low; RT path p2 half-recovered)
 are in the README. 94 unit tests pass. Deps pruned (MLJ, JuMP, HiGHS gone).
+
+## 2026-09-28 (later) — Root cause of the SE under-coverage and the p2 bias
+
+`validation/oracle.jl` (true nuisances plugged into the EIFs) is unbiased and
+calibrated everywhere, so the EIFs, the SE and the Z' permutation are right; the
+problem is the nuisance fits. `validation/alpha_quality.jl` found it: R crumble's
+network defaults (dropout 0.1, weight decay 0.01) shrink the fitted representers
+(mean 0.81-0.87 where it must be 1). Defaults are now dropout 0 and weight decay 0
+(`weight_decay` added to `crumble_control`), which fit as well as the exact
+saturated representers. A full Monte Carlo with the new defaults was started and
+stopped at xao's request after ~30 min; it has NOT been completed. Nonparametric
+fits (saturated learner + saturated Riesz) are validated (coverage 0.94-0.955 at
+n = 1000). A CV-ridge interaction basis was tried and reverted: it blew up in
+sparse cells. Old-default MC results are kept as `*_Rdefaults.csv`.
