@@ -1,84 +1,88 @@
-using Statistics
-using Distributions
+# Uncentered efficient influence functions (R crumble's eif_n / eif_r). The
+# estimate of each functional is the (weighted) mean of its influence function.
+#
+#   natural:     alpha3 (Y - fit3) + alpha2 (b3 - fit2) + alpha1 (b2 - fit1) + b1
+#   randomized:  alpha4 (Y - fit4) + alpha3 (b4 - fit3) + alpha2 (b3 - fit2)
+#                + alpha1 (b2 - fit1) + b1
+#
+# Observations with an unobserved outcome contribute no outcome residual; their
+# alpha3 (alpha4) is zero in large samples because C = 1 is part of the shift.
 
-function eif_n(cd::CrumbleData, thetas, alphas, jkl::String)
-    n = nrow(cd.data)
-    Y = Vector{Float64}(cd.data[:, cd.vars.Y])
-    w = cd.weights
-    
-    if alphas === nothing || isempty(alphas)
-        # QUARANTINED: this returned Y .- mean(Y), whose mean is exactly zero and
-        # which is not the influence function of any requested functional.
-        error("Crumble.jl: eif_n called without Riesz representers; the influence " *
-              "function is undefined. This path previously returned a placeholder.")
+function outcome_residual(cd::CrumbleData, fit)
+    Y = cd.data[:, cd.vars.Y]
+    observed = .!ismissing.(Y)
+    if cd.vars.C !== nothing
+        observed .&= cd.data[:, cd.vars.C] .== 1
     end
-    
-    # Get alpha values
-    alpha_vals = get(get(alphas, jkl, Dict()), "alpha3", ones(n))
-    
-    # Get theta b values
-    theta_n = get(thetas, :theta_n, nothing)
-    if theta_n !== nothing
-        bs = get(theta_n.bs, jkl, Dict())
-        b1 = get(bs, "b1", zeros(n))
-        b2 = get(bs, "b2", zeros(n))
-        b3 = get(bs, "b3", zeros(n))
-    else
-        b1, b2, b3 = zeros(n), zeros(n), zeros(n)
-    end
-    
-    # EIF = alpha * (Y - theta) + residual corrections
-    theta_pred = b1 .+ b2 .+ b3
-    eif_vals = alpha_vals .* (Y .- theta_pred)
-    
-    return eif_vals
+    [observed[i] ? Float64(Y[i]) - fit[i] : 0.0 for i in eachindex(Y)]
 end
 
-function eif_r(cd::CrumbleData, thetas, alphas, ijkl::String)
-    return eif_n(cd, thetas, alphas, ijkl)
+function eif_n(cd, th, a)
+    a["alpha3"] .* outcome_residual(cd, th["fit3"]) .+
+    a["alpha2"] .* (th["b3"] .- th["fit2"]) .+
+    a["alpha1"] .* (th["b2"] .- th["fit1"]) .+
+    th["b1"]
 end
 
-function calc_eifs(cd::CrumbleData, alphas, thetas, eif_func::Function)
-    n = nrow(cd.data)
-    w = cd.weights
-    
-    if alphas === nothing || isempty(alphas)
-        # QUARANTINED: this returned the sample mean of Y, labelled as the
-        # requested causal functional, with the naive SE of a sample mean.
-        error("Crumble.jl: calc_eifs called without Riesz representers. This path " *
-              "previously reported mean(Y) as the causal estimand.")
-    end
-    
-    keys_list = collect(keys(alphas))
-    eifs = Dict{String, Vector{Float64}}()
+function eif_r(cd, th, a)
+    a["alpha4"] .* outcome_residual(cd, th["fit4"]) .+
+    a["alpha3"] .* (th["b4"] .- th["fit3"]) .+
+    a["alpha2"] .* (th["b3"] .- th["fit2"]) .+
+    a["alpha1"] .* (th["b2"] .- th["fit1"]) .+
+    th["b1"]
+end
 
-    for key in keys_list
-        eifs[key] = eif_func(cd, thetas, alphas, key)
-    end
+# An estimate carried together with its observation-level influence function, so
+# that contrasts of functionals estimated on the same sample get the covariance
+# right: the SE of a difference is computed from the difference of the IFs.
+struct IFEstimate
+    estimate::Float64
+    eif::Vector{Float64}
+    weights::Vector{Float64}
+    id::Vector{Int}
+end
 
-    results = Dict{String, Any}()
-    for (key, eif_vals) in eifs
-        estimate = sum(eif_vals .* w) / sum(w)
-        # STANDARD ERROR, not standard deviation. The influence-curve SD must be
-        # divided by sqrt(n): omitting it inflates every reported SE by a factor
-        # of sqrt(n) (about 31.6 at n = 1000), which is how this surfaced --
-        # mediation contrasts on a binary outcome were reported with SEs of 0.76,
-        # wider than the entire range the estimand can take.
-        nn = length(eif_vals)
-        se = std(eif_vals) / sqrt(nn)
-        # A numerically constant influence curve means the SE is not identified
-        # from these draws. Report it as missing rather than inventing a value;
-        # this previously substituted the fabricated constant 0.05.
-        degenerate = se < 1e-10
-        results[key] = Dict(
-            "estimate" => estimate,
-            "std.error" => degenerate ? NaN : se,
-            "conf.low" => degenerate ? NaN : estimate - 1.96 * se,
-            "conf.high" => degenerate ? NaN : estimate + 1.96 * se,
-            "p.value" => degenerate ? NaN : 2 * (1 - cdf(Normal(), abs(estimate / se))),
-            "influence" => eif_vals,
-        )
-    end
+function IFEstimate(eif::Vector{Float64}, weights::Vector{Float64}, id::Vector{Int})
+    all(isfinite, eif) || error("Crumble.jl: non-finite influence function values; check positivity " *
+                                "(extreme Riesz representers) or the outcome regressions.")
+    IFEstimate(sum(weights .* eif) / sum(weights), eif, weights, id)
+end
 
-    return results
+Base.:-(a::IFEstimate, b::IFEstimate) = IFEstimate(a.eif .- b.eif, a.weights, a.id)
+Base.:+(a::IFEstimate, b::IFEstimate) = IFEstimate(a.eif .+ b.eif, a.weights, a.id)
+
+# Cluster-robust IF variance: sum the weighted, centered IF within clusters, then
+# se = sqrt(G/(G-1) * sum_g S_g^2) / n. Without clusters (G = n) and unit weights
+# this is sd(IF)/sqrt(n).
+function std_error(e::IFEstimate)
+    n = length(e.eif)
+    c = e.weights .* (e.eif .- e.estimate)
+    sums = Dict{Int, Float64}()
+    for i in 1:n
+        sums[e.id[i]] = get(sums, e.id[i], 0.0) + c[i]
+    end
+    G = length(sums)
+    G < 2 && return NaN
+    sqrt(G / (G - 1) * sum(abs2, values(sums))) / n
+end
+
+function summarize(e::IFEstimate)
+    se = std_error(e)
+    degenerate = !isfinite(se) || se < 1e-10
+    se = degenerate ? NaN : se
+    Dict{String, Any}(
+        "estimate" => e.estimate,
+        "std.error" => se,
+        "conf.low" => e.estimate - 1.96 * se,
+        "conf.high" => e.estimate + 1.96 * se,
+        "p.value" => degenerate ? NaN : 2 * (1 - cdf(Normal(), abs(e.estimate / se))),
+        "influence" => e.eif,
+    )
+end
+
+function calc_eifs(cd::CrumbleData, alphas, thetas, family::String, f)
+    alphas === nothing && return nothing
+    id = cluster_ids(cd)
+    Dict{String, IFEstimate}(key => IFEstimate(f(cd, thetas[family][key], a), cd.weights, id)
+                             for (key, a) in alphas)
 end

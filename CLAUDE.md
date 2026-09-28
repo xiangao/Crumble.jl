@@ -79,3 +79,18 @@ patterns) and are the first place to look when the README isn't enough.
   in, it's the one-hot-expanded version.
 - Cross-fit `folds` stratify on `outcome`, not on treatment — see the
   `strata` line in `crumble()`.
+
+## 2026-09-28 — Estimator rebuilt (v0.2.0)
+
+Before this, nothing was implemented: random Riesz representers (quarantined
+2026-09-25), and `theta.jl` ignored the j/k/l shifts, fitted OLS without an
+intercept, and stored training predictions where the EIF needs validation ones. The
+Z' assignment omitted R's trace(P) = 0 constraint, so Z' = Z. Rewritten from R
+crumble 0.1.2: `learners.jl` (glm | saturated), `riesz.jl` (NN port with per-batch
+weights — R broadcasts the full weight vector against the batch — or closed-form
+:linear/:saturated), `theta.jl`, `eif.jl` (IFEstimate, cluster-robust SE),
+`calc_estimates.jl` (N/O/RI/RT), `permutation.jl` (Hungarian, diagonal priced out).
+`alpha_cap` added: at n = 1000 an empty cell in a fold sends the NN representer to
+thousands (true max 45). Validation in `validation/` (exact truth by enumeration);
+results and the two open problems (SEs up to 20% low; RT path p2 half-recovered)
+are in the README. 94 unit tests pass. Deps pruned (MLJ, JuMP, HiGHS gone).

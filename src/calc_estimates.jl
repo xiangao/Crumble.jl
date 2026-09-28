@@ -1,73 +1,49 @@
-"""
-    contrast(eif_a, eif_b, w)
+# Effects as contrasts of functionals (R crumble's calc_estimates_*). Keys are the
+# treatment patterns of the functionals: "jkl" for natural-type, "ijkl" for
+# randomized-type, with 1 = the d1 regime and 0 = the d0 regime.
 
-Form the contrast of two influence-function based estimates computed on the same
-sample. The two estimates share observations, so the covariance term is part of
-the variance of their difference. Using `sqrt(se_a^2 + se_b^2)` assumes
-independence and is wrong here: it overstates the SE when the two influence
-curves are positively correlated, which is the usual case.
-
-The correct quantity is the SD of the observation-level contrast influence
-function, `IF_a - IF_b`, divided by `sqrt(n)`.
-"""
-function contrast(eif_a::Vector{Float64}, eif_b::Vector{Float64}, w::Vector{Float64})
-    length(eif_a) == length(eif_b) || error("Crumble.jl: contrast influence functions have different lengths.")
-    d = eif_a .- eif_b
-    est = sum(d .* w) / sum(w)
-    n = length(d)
-    se = std(d) / sqrt(n)
-    degenerate = !isfinite(se) || se < 1e-10
-    return Dict(
-        "estimate"   => est,
-        "std.error"  => degenerate ? NaN : se,
-        "conf.low"   => degenerate ? NaN : est - 1.96 * se,
-        "conf.high"  => degenerate ? NaN : est + 1.96 * se,
-        "p.value"    => degenerate ? NaN : 2 * (1 - cdf(Normal(), abs(est / se))),
-    )
-end
-
-function calc_estimates_natural(eif_ns::Dict{String, Any}, weights::Vector{Float64})
-    if eif_ns === nothing || isempty(eif_ns)
-        # QUARANTINED: this returned zeros with zero SEs and p = 1, which reads as
-        # a precisely estimated null rather than as a failure.
-        error("Crumble.jl: calc_estimates_natural received no influence functions.")
+function need(eifs, keys...)
+    eifs === nothing && error("Crumble.jl: no influence functions were computed for this effect.")
+    for k in keys
+        haskey(eifs, k) || error("Crumble.jl: required functional \"$k\" is missing.")
     end
-
-    # The three functionals are required by name. Substituting whichever keys
-    # happen to be present, as the previous code did, silently reports one
-    # estimand under another estimand's label.
-    for k in ("100", "000", "111")
-        haskey(eif_ns, k) || error("Crumble.jl: required functional \"$k\" is missing; " *
-                                   "cannot form the natural-effect contrasts.")
-    end
-
-    getif(k) = haskey(eif_ns[k], "influence") ? Vector{Float64}(eif_ns[k]["influence"]) :
-        error("Crumble.jl: functional \"$k\" carries no observation-level influence " *
-              "function, so a valid contrast SE cannot be formed.")
-
-    if_100, if_000, if_111 = getif("100"), getif("000"), getif("111")
-
-    return Dict(
-        "direct"   => contrast(if_100, if_000, weights),
-        "indirect" => contrast(if_111, if_100, weights),
-        "ate"      => contrast(if_111, if_000, weights),
-    )
 end
 
-# The organic, randomized-interventional and randomized-transported estimands are
-# distinct functionals. They previously all delegated to the natural-effect
-# calculation, so three different labels reported the same numbers.
-function calc_estimates_organic(eif_ns::Dict{String, Any}, weights::Vector{Float64})
-    error("Crumble.jl: organic effects are not implemented; this previously " *
-          "returned the natural-effect estimates under an organic label.")
+function calc_estimates_natural(n)
+    need(n, "111", "100", "000")
+    Dict("direct"   => summarize(n["100"] - n["000"]),   # A -> Y
+         "indirect" => summarize(n["111"] - n["100"]),   # A -> M -> Y
+         "ate"      => summarize(n["111"] - n["000"]))
 end
 
-function calc_estimates_ri(eif_rs::Dict{String, Any}, weights::Vector{Float64})
-    error("Crumble.jl: randomized-interventional effects are not implemented; this " *
-          "previously returned the natural-effect estimates under an RI label.")
+function calc_estimates_organic(n)
+    need(n, "101", "000", "111")
+    Dict("ode" => summarize(n["101"] - n["000"]),
+         "oie" => summarize(n["111"] - n["101"]))
 end
 
-function calc_estimates_rt(eif_ns::Dict{String, Any}, eif_rs::Dict{String, Any}, weights::Vector{Float64})
-    error("Crumble.jl: randomized-transported effects are not implemented; this " *
-          "previously returned the natural-effect estimates under an RT label.")
+# Randomized interventional effects: "1100" is E[Y(1, Z(1), G(0))], with G(0) a
+# random draw of the mediator under A = 0 given W, which is the interventional
+# direct-effect functional of Diaz et al. (2021) that medoutcon estimates.
+function calc_estimates_ri(r)
+    need(r, "1100", "0000", "1111")
+    Dict("ride" => summarize(r["1100"] - r["0000"]),
+         "riie" => summarize(r["1111"] - r["1100"]))
+end
+
+# Recanting twins. The path effects p1..p4 and the intermediate-confounding term
+# add up to the ATE exactly. (R crumble writes the confounding term with a
+# redundant r["0011"] - r["0011"], which is zero; it is omitted here.)
+function calc_estimates_rt(n, r)
+    need(n, "111", "011", "010", "000")
+    need(r, "0111", "0011", "0010")
+    p1 = n["111"] - n["011"]         # A -> Y
+    p2 = r["0111"] - r["0011"]       # A -> Z -> Y
+    p3 = r["0011"] - r["0010"]       # A -> Z -> M -> Y
+    p4 = n["010"] - n["000"]         # A -> M -> Y
+    ic = n["011"] - r["0111"] + r["0010"] - n["010"]
+    Dict("p1" => summarize(p1), "p2" => summarize(p2), "p3" => summarize(p3),
+         "p4" => summarize(p4), "intermediate_confounding" => summarize(ic),
+         "direct" => summarize(p1 + p2), "indirect" => summarize(p3 + p4),
+         "ate" => summarize(n["111"] - n["000"]))
 end

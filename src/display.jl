@@ -39,7 +39,7 @@ function tidy(result::CrumbleResult)
         se = val["std.error"]
         ci_low = est - 1.96 * se
         ci_high = est + 1.96 * se
-        p_val = 2 * (1 - cdf(Normal(), abs(est / se)))
+        p_val = val["p.value"]
         push!(rows, (
             estimand=estimand,
             estimate=est,
